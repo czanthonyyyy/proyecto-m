@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Corazón Neon — Te amo, Marianys</title>
+  <style>
+    :root{
+      --bg:#050307;
+      --neon1:#ff2d95; /* rosa */
+      --neon2:#8b5cff; /* violeta */
+      --neon3:#ff5f3d; /* naranja */
+      --text-size:28px;
+    }
+    html,body{height:100%;margin:0;background:radial-gradient(circle at 30% 10%, #0a0510 0%, var(--bg) 60%);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#fff}
+    .stage{min-height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:32px}
+
+    /* contenedor del SVG */
+    .card{width:min(760px,92vw);max-width:900px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;position:relative} 
+    svg{width:100%;height:auto;display:block}
+
+    /* texto neon (hidden initially) */
+    .caption{
+      color:var(--neon1);
+      font-weight:800;
+      letter-spacing:1px;
+      text-align:center;
+      font-size:var(--text-size);
+      text-transform:none;
+      text-shadow:
+        0 0 8px rgba(255,45,149,0.9),
+        0 0 20px rgba(139,92,255,0.35),
+        0 0 42px rgba(255,95,61,0.15);
+      filter:drop-shadow(0 0 16px rgba(255,45,149,0.45));
+      opacity:0; /* start hidden */
+      transform:translateY(2px);margin-top:-8px;
+      transition: opacity 650ms cubic-bezier(.2,.9,.2,1), transform 650ms cubic-bezier(.2,.9,.2,1);
+      will-change: opacity, transform;
+      pointer-events: none;
+    }
+    .caption.visible{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events: auto;
+    }
+
+    /* pulse applied after visible */
+    @keyframes captionPulse{
+      0%{filter:drop-shadow(0 0 8px rgba(255,45,149,0.6))}
+      50%{filter:drop-shadow(0 0 20px rgba(139,92,255,0.45))}
+      100%{filter:drop-shadow(0 0 8px rgba(255,45,149,0.6))}
+    }
+    .caption.pulsing{animation: captionPulse 1400ms infinite ease-in-out}
+
+    /* button */
+    .controls{position:fixed;left:12px;bottom:12px;color:#bbb;font-size:13px;opacity:0.9}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff;padding:8px 12px;border-radius:10px;backdrop-filter:blur(4px);cursor:pointer}
+
+    /* nail the neon glow using filters and duplicate strokes */
+    .heart-path{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;filter:url(#glow)}
+    .heart-core{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:#fff;opacity:0.95;filter:url(#innerGlow)}
+
+    /* particles */
+    .spark{opacity:0;transform-origin:center;}
+    @keyframes sparkle{
+      0%{opacity:0;transform:scale(0.2) translateY(0)}
+      40%{opacity:1;transform:scale(1.1) translateY(-6px)}
+      100%{opacity:0;transform:scale(0.2) translateY(-12px)}
+    }
+
+    /* fallback message */
+    .fallback{color:#999;font-size:14px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card">
+      <!-- SVG heart -- reliable stroke-dasharray animation -->
+      <svg id="heartSVG" viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" aria-labelledby="titleDesc" role="img">
+        <title id="titleDesc">Corazón neon dibujándose</title>
+
+        <defs>
+          <!-- neon gradient for stroke -->
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--neon1)" />
+            <stop offset="50%" stop-color="var(--neon2)" />
+            <stop offset="100%" stop-color="var(--neon3)" />
+          </linearGradient>
+
+          <!-- glow filter -->
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4.5" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </feMerge>
+          </filter>
+
+          <!-- inner bright filter -->
+          <filter id="innerGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.8" result="b2" />
+            <feMerge>
+              <feMergeNode in="b2" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          <!-- soft vignette background inside SVG -->
+          <radialGradient id="innerFill" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="rgba(255,60,140,0.12)" />
+            <stop offset="60%" stop-color="rgba(139,92,255,0.04)" />
+            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
+          </radialGradient>
+        </defs>
+
+        <!-- subtle glowy background shape so heart "lights up" the canvas -->
+        <ellipse cx="100" cy="95" rx="70" ry="45" fill="url(#innerFill)" opacity="0.9" />
+
+        <!-- main path for the heart. This path is symmetrical and centered in the viewBox -->
+        <path id="heartPath"
+          class="heart-path"
+          d="M100,30
+             C120,10 155,25 155,55
+             C155,90 120,110 100,128
+             C80,110 45,90 45,55
+             C45,25 80,10 100,30
+             Z"
+          stroke="url(#g1)" />
+
+        <!-- thin bright core stroke on top for sharpness -->
+        <path id="heartCore" class="heart-core" d="M100,30
+             C120,10 155,25 155,55
+             C155,90 120,110 100,128
+             C80,110 45,90 45,55
+             C45,25 80,10 100,30
+             Z" />
+
+        <!-- animated spark elements (will be positioned by JS) -->
+        <circle id="spark1" class="spark" r="2.4" fill="var(--neon1)" />
+        <circle id="spark2" class="spark" r="1.8" fill="var(--neon2)" />
+        <circle id="spark3" class="spark" r="2.1" fill="var(--neon3)" />
+
+      </svg>
+
+      <div class="caption" id="caption">te amo, marianys</div>
+      <div class="fallback" id="fallback" style="display:none">Si no ves la animación, activa JavaScript o prueba en otro navegador (Chrome/Firefox).</div>
+    </div>
+
+    <div class="controls"><button id="replay" class="btn">Repetir animación</button></div>
+  </div>
+
+  <script>
+    // Implement robust SVG stroke-drawing animation. This approach is reliable across browsers.
+    (function(){
+      const svg = document.getElementById('heartSVG');
+      const path = document.getElementById('heartPath');
+      const core = document.getElementById('heartCore');
+      const replayBtn = document.getElementById('replay');
+      const fallback = document.getElementById('fallback');
+      const caption = document.getElementById('caption');
+
+      if(!path || !svg){
+        fallback.style.display = 'block';
+        return;
+      }
+
+      // ensure caption hidden at start
+      caption.classList.remove('visible');
+      caption.classList.remove('pulsing');
+
+      // compute total length and set up dash so it animates
+      const total = path.getTotalLength();
+      // ensure styles are reset
+      path.style.transition = 'none';
+      path.style.strokeDasharray = total + ' ' + total;
+      path.style.strokeDashoffset = total;
+      path.getBoundingClientRect(); // trigger reflow
+
+      // core stroke shows a bit later and is thinner
+      core.style.transition = 'none';
+      core.style.strokeDasharray = total + ' ' + total;
+      core.style.strokeDashoffset = total;
+
+      // function to show caption after heart finished
+      function revealCaption(delay = 120){
+        setTimeout(()=>{
+          caption.classList.add('visible');
+          // after it becomes visible, add a gentle pulse
+          setTimeout(()=>caption.classList.add('pulsing'), 260);
+        }, delay);
+      }
+
+      // function to start animation
+      function startAnimation(duration = 7000){
+        // hide caption while drawing
+        caption.classList.remove('pulsing');
+        caption.classList.remove('visible');
+
+        const start = performance.now();
+        const ease = t => 1 - Math.pow(1 - t, 3); // ease-out cubic
+
+        // particle handles
+        const spark1 = document.getElementById('spark1');
+        const spark2 = document.getElementById('spark2');
+        const spark3 = document.getElementById('spark3');
+
+        function frame(now){
+          const elapsed = Math.min(duration, now - start);
+          const p = ease(elapsed / duration);
+          const offset = total * (1 - p);
+          path.style.strokeDashoffset = offset;
+
+          // core follows slightly behind for a sharper white edge
+          const coreOffset = total * (1 - Math.max(0, (elapsed - 200) / duration));
+          core.style.strokeDashoffset = coreOffset;
+
+          // position sparks near the drawing tip
+          const tipDistance = total * p;
+          try{
+            const tipPoint = path.getPointAtLength(Math.max(0, Math.min(tipDistance, total)));
+            [spark1, spark2, spark3].forEach((s, i)=>{
+              const jitter = (i-1) * 6; // spread
+              s.setAttribute('cx', tipPoint.x + (Math.random()-0.5)*10 + jitter);
+              s.setAttribute('cy', tipPoint.y + (Math.random()-0.5)*10 - Math.random()*6);
+              s.style.opacity = (Math.random()*0.9 + 0.2).toString();
+              s.style.animation = `sparkle ${0.8 + Math.random()*0.9}s ease-out forwards`;
+            });
+          }catch(e){ /* some browsers might throw if path not ready */ }
+
+          if(elapsed < duration){
+            requestAnimationFrame(frame);
+          } else {
+            // finish: ensure offsets are zero
+            path.style.strokeDashoffset = 0;
+            core.style.strokeDashoffset = 0;
+            // reveal caption slightly after finish
+            revealCaption(260);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      // safe replay handler
+      replayBtn.addEventListener('click', ()=>{
+        // reset
+        path.style.transition = 'none';
+        core.style.transition = 'none';
+        const total = path.getTotalLength();
+        path.style.strokeDasharray = total + ' ' + total;
+        path.style.strokeDashoffset = total;
+        core.style.strokeDasharray = total + ' ' + total;
+        core.style.strokeDashoffset = total;
+        // hide caption
+        caption.classList.remove('visible');
+        caption.classList.remove('pulsing');
+        // small timeout to allow reset to apply
+        setTimeout(()=>startAnimation(7000), 60);
+      });
+
+      // start automatically
+      setTimeout(()=>startAnimation(7000), 120);
+
+      // if user has JS disabled, show fallback
+      fallback.style.display = 'none';
+    })();
+  </script>
+</body>
+</html>
